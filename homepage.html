@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Earth</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Background */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #021B79, #0575E6);
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Container */
+        .container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            width: 350px;
+        }
+
+        /* Title */
+        .container h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        /* Stars */
+        .stars {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .star {
+            font-size: 2em;
+            cursor: pointer;
+            color: #FFD700;
+            transition: transform 0.3s;
+        }
+
+        .star:hover, .star.active {
+            transform: scale(1.2);
+        }
+
+        /* Rating display */
+        .rating-display {
+            font-size: 1.5em;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        /* Animation */
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <h1>Rate Your Earth 🌍</h1>
+        <p>Give Earth a rating from 0 to 5 stars!</p>
+
+        <!-- Stars for rating -->
+        <div class="stars">
+            <span class="star" data-value="1">&#9733;</span>
+            <span class="star" data-value="2">&#9733;</span>
+            <span class="star" data-value="3">&#9733;</span>
+            <span class="star" data-value="4">&#9733;</span>
+            <span class="star" data-value="5">&#9733;</span>
+        </div>
+
+        <!-- Current rating display -->
+        <div class="rating-display">Current Rating: <span id="rating-value">0</span>/5</div>
+    </div>
+
+    <script>
+        // JavaScript for interactive rating
+        const stars = document.querySelectorAll('.star');
+        const ratingDisplay = document.getElementById('rating-value');
+        let currentRating = 0;
+        let totalRatings = 0;
+        let ratingSum = 0;
+
+        // Add event listeners to stars
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const rating = parseInt(star.getAttribute('data-value'));
+                ratingSum += rating;
+                totalRatings++;
+                currentRating = (ratingSum / totalRatings).toFixed(1);
+                updateStars(rating);
+                ratingDisplay.innerText = currentRating;
+            });
+        });
+
+        // Function to update star colors based on rating
+        function updateStars(rating) {
+            stars.forEach(star => {
+                star.classList.remove('active');
+                if (parseInt(star.getAttribute('data-value')) <= rating) {
+                    star.classList.add('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

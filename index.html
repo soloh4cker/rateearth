@@ -1,130 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9174449971388481"
-     crossorigin="anonymous"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script
+      async=""
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9174449971388481"
+      crossorigin="anonymous"
+    ></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js"></script>
+
+    <!-- FOR FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js"></script>
+
     <title>Rate Earth</title>
-    <style>
-        /* Reset */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Background */
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom, #021B79, #0575E6);
-            color: #FFF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-        /* Container */
-        .container {
-            text-align: center;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            width: 350px;
-        }
-
-        /* Title */
-        .container h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        /* Stars */
-        .stars {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .star {
-            font-size: 2em;
-            cursor: pointer;
-            color: #FFD700;
-            transition: transform 0.3s;
-        }
-
-        .star:hover, .star.active {
-            transform: scale(1.2);
-        }
-
-        /* Rating display */
-        .rating-display {
-            font-size: 1.5em;
-            margin-top: 15px;
-            font-weight: bold;
-        }
-
-        /* Animation */
-        .fade-in {
-            opacity: 0;
-            animation: fadeIn 1s forwards;
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-    </style>
-</head>
-<body>
+  <body cz-shortcut-listen="true">
     <div class="container fade-in">
-        <h1>Rate Your Earth 🌍</h1>
-        <p>Give Earth a rating from 0 to 5 stars!</p>
+      <h1>Rate Your Earth 🌍</h1>
+      <p>Give Earth a rating from 0 to 5 stars!</p>
 
-        <!-- Stars for rating -->
-        <div class="stars">
-            <span class="star" data-value="1">&#9733;</span>
-            <span class="star" data-value="2">&#9733;</span>
-            <span class="star" data-value="3">&#9733;</span>
-            <span class="star" data-value="4">&#9733;</span>
-            <span class="star" data-value="5">&#9733;</span>
-        </div>
+      <!-- Stars for rating -->
+      <div class="stars">
+        <span class="star" data-value="1">★</span>
+        <span class="star" data-value="2">★</span>
+        <span class="star" data-value="3">★</span>
+        <span class="star" data-value="4">★</span>
+        <span class="star" data-value="5">★</span>
+      </div>
 
-        <!-- Current rating display -->
-        <div class="rating-display">Current Rating: <span id="rating-value">0</span>/5</div>
+      <!-- Current rating display -->
+      <div class="rating-display">
+        Current Rating: <span id="rating-value">0</span>/5
+      </div>
     </div>
 
-    <script>
-        // JavaScript for interactive rating
-        const stars = document.querySelectorAll('.star');
-        const ratingDisplay = document.getElementById('rating-value');
-        let currentRating = 0;
-        let totalRatings = 0;
-        let ratingSum = 0;
+    <!-- LOGIN DIALOG CODE -->
+    <!-- Login Dialog -->
+    <div id="login-dialog" class="login-dialog" style="display: none">
 
-        // Add event listeners to stars
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                const rating = parseInt(star.getAttribute('data-value'));
-                ratingSum += rating;
-                totalRatings++;
-                currentRating = (ratingSum / totalRatings).toFixed(1);
-                updateStars(rating);
-                ratingDisplay.innerText = currentRating;
-            });
+        <div class="dialog-content">
+            <div
+            id="closeDialogBar"
+            class="closeDialogBar"
+              style="
+                display: flex;
+                justify-content: flex-end;
+                align-items: flex-end;
+                margin-bottom: 30px;
+                cursor: pointer;
+              "
+            >
+              ❌
+            </div>
+          
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <p>You need to log in first to submit your rating.</p>
+          
+              <button style="margin-top: 20px" onclick="loginWithGoogle()">
+                Login with Google
+              </button>
+            </div>
+          </div>
+          
+
+    </div>
+    <!-- LOGIN DIALOG CODE -->
+
+    <!-- FOR FIREBASE SETTING -->
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+        import { getFirestore, setDoc, doc, getDoc, serverTimestamp, getDocs, collection, updateDoc } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
+        
+        // Firebase configuration and initialization
+        const firebaseConfig = {
+          apiKey: "KEY_HERE",
+          authDomain: "dipak-upwork.firebaseapp.com",
+          projectId: "dipak-upwork",
+          storageBucket: "dipak-upwork.firebasestorage.app",
+          messagingSenderId: "866759555440",
+          appId: "1:866759555440:web:ce18806ff6149baf0877b5",
+          measurementId: "G-V7QBT1E96X"
+        };
+      
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+      
+        let isLoggedIn = false;
+        let hasRated = false;
+        let userRating = null;  // Store user's rating for later
+      
+        const stars = document.querySelectorAll(".star");
+        const ratingDisplay = document.getElementById("rating-value");
+      
+        // On page load, check if the user is logged in and get average rating
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            isLoggedIn = true;
+            checkUserRating(user.uid);
+            getAverageRating(); // Get the average rating when the page loads
+          } else {
+            isLoggedIn = false;
+          }
         });
-
-        // Function to update star colors based on rating
-        function updateStars(rating) {
-            stars.forEach(star => {
-                star.classList.remove('active');
-                if (parseInt(star.getAttribute('data-value')) <= rating) {
-                    star.classList.add('active');
-                }
+      
+        // Handle star clicks
+        stars.forEach((star) => {
+          star.addEventListener("click", () => {
+            const rating = parseInt(star.getAttribute("data-value"));
+            if (isLoggedIn) {
+              if (!hasRated) {
+                submitRating(rating);
+              } else {
+                alert("You have already rated.");
+              }
+            } else {
+              showLoginDialog(rating);
+            }
+          });
+        });
+      
+        // Show the login dialog
+        function showLoginDialog(rating) {
+          const dialog = document.getElementById("login-dialog");
+          dialog.style.display = "flex";
+          const loginButton = dialog.querySelector("button");
+      
+          // When the user clicks the login button
+          loginButton.onclick = function () {
+            loginWithGoogle(rating);
+          };
+        }
+      
+        // Handle Google login
+        function loginWithGoogle(rating) {
+          const provider = new GoogleAuthProvider();
+          signInWithPopup(auth, provider)
+            .then((result) => {
+              isLoggedIn = true;
+              document.getElementById("login-dialog").style.display = "none";
+              alert("Login successful! You can now submit your rating.");
+              submitRating(rating);
+            })
+            .catch((error) => {
+              console.error("Error during Google sign-in", error);
             });
         }
+      
+        // Submit the rating to Firebase
+        function submitRating(rating) {
+          const user = auth.currentUser;
+          if (!user) {
+            alert("You must log in to submit a rating.");
+            return;
+          }
+      
+          const userId = user.uid;
+          const userEmail = user.email;
+          const userName = user.displayName || "Anonymous"; // Use the user's name or "Anonymous" if not available
+      
+          // Store the user's rating in the Firestore "ratings" collection
+          setDoc(doc(db, "ratings", userId), {
+            rating: rating,
+            email: userEmail,  // Store the user's email
+            name: userName,    // Store the user's name
+            timestamp: serverTimestamp()
+          })
+          .then(() => {
+            alert("Rating stored successfully!");
+            hasRated = true;
+            userRating = rating;  // Store the user's rating
+            updateStars(rating);
+            disableStars();
+            updateAverageRating(); // After submitting a rating, update the average
+          })
+          .catch((error) => {
+            console.error("Error storing rating:", error);
+          });
+        }
+      
+        // Check if the user has already rated
+        function checkUserRating(userId) {
+          const userDocRef = doc(db, "ratings", userId);
+          getDoc(userDocRef)
+            .then((docSnap) => {
+              if (docSnap.exists()) {
+                hasRated = true;
+                userRating = docSnap.data().rating; // Store user's rating
+                updateStars(userRating);  // Update the star display with user's rating
+              }
+            })
+            .catch((error) => {
+              console.error("Error retrieving user rating:", error);
+            });
+        }
+      
+        // Update the stars based on the rating
+        function updateStars(rating) {
+          stars.forEach((star) => {
+            star.classList.remove("active");
+            star.classList.remove("rated");  // Remove the rated class for all stars
+            if (parseInt(star.getAttribute("data-value")) <= rating) {
+              star.classList.add("active");
+              star.classList.add("rated");  // Add the rated class to show a bigger size
+            }
+          });
+          ratingDisplay.innerText = rating;
+        }
+      
+        // Disable the stars after rating
+        function disableStars() {
+          stars.forEach((star) => {
+            star.style.pointerEvents = "none"; // Disables clicking on the stars
+          });
+        }
+      
+        // Get the average rating from Firestore and display it
+        function getAverageRating() {
+          const ratingsRef = collection(db, "ratings");
+          getDocs(ratingsRef)
+            .then((querySnapshot) => {
+              let totalRating = 0;
+              let numRatings = querySnapshot.size;
+      
+              querySnapshot.forEach((doc) => {
+                totalRating += doc.data().rating;
+              });
+      
+              if (numRatings > 0) {
+                const average = totalRating / numRatings;
+                displayAverageRating(average);
+              }
+            })
+            .catch((error) => {
+              console.error("Error getting ratings:", error);
+            });
+        }
+      
+        // Display the average rating
+        function displayAverageRating(average) {
+          ratingDisplay.innerText = average.toFixed(1); // Display average with 1 decimal place
+        }
+      
+        // Update the average rating in Firestore
+        function updateAverageRating() {
+          const ratingsRef = collection(db, "ratings");
+          getDocs(ratingsRef)
+            .then((querySnapshot) => {
+              let totalRating = 0;
+              let numRatings = querySnapshot.size;
+      
+              querySnapshot.forEach((doc) => {
+                totalRating += doc.data().rating;
+              });
+      
+              if (numRatings > 0) {
+                const average = totalRating / numRatings;
+                // Update the average rating in Firestore
+                updateDoc(doc(db, "averageRating", "averageRating"), {
+                  averageRating: average
+                }).then(() => {
+                  console.log("Average rating updated!");
+                  displayAverageRating(average);
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Error updating average rating:", error);
+            });
+        }
+      </script>
+      
+      
+      
+
+    <!-- FOR FIREBASE SETTING -->
+
+    <script>
+      let totalRatings = 0;
+      let ratingSum = 0;
+
+      // Add event listeners to stars
+      stars.forEach((star) => {
+        star.addEventListener("click", () => {
+          const rating = parseInt(star.getAttribute("data-value"));
+
+          ratingSum += rating;
+          totalRatings++;
+          currentRating = (ratingSum / totalRatings).toFixed(1);
+
+          updateStars(rating);
+
+          ratingDisplay.innerText = currentRating;
+        });
+      });
+
+      // Function to update star colors based on rating
+      function updateStars(rating) {
+        stars.forEach((star) => {
+          star.classList.remove("active");
+          if (parseInt(star.getAttribute("data-value")) <= rating) {
+            star.classList.add("active");
+          }
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
